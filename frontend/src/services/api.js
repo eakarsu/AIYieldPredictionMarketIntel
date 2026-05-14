@@ -30,4 +30,12 @@ export const updateItem = (feature, id, data) => api.put(`/${feature}/${id}`, da
 export const deleteItem = (feature, id) => api.delete(`/${feature}/${id}`);
 export const analyzeItem = (feature, id) => api.post(`/${feature}/${id}/analyze`);
 
+// Ad-hoc AI tools (no DB persistence)
+export const aiYieldPrediction = (data) => api.post('/ai/yield-prediction', data);
+export const aiMarketTrendForecast = (data) => api.post('/ai/market-trend-forecast', data);
+export const aiPestOutbreakPrediction = (data) => api.post('/ai/pest-outbreak-prediction', data);
+export const aiIrrigationOptimize = (data) => api.post('/ai/irrigation-optimize', data);
+export const aiSoilAmendment = (data) => api.post('/ai/soil-amendment', data);
+export const aiEquipmentMaintenance = (data) => api.post('/ai/equipment-maintenance', data);
+
 export default api;

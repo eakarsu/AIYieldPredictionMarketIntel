@@ -22,6 +22,10 @@ app.get('/api/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+// Direct AI endpoints
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/custom', require('./routes/customFeatures'));
+
 // Feature route imports
 const routeMap = {
   'yield-predictions': 'yieldPredictions',
@@ -65,6 +69,10 @@ async function start() {
     await sequelize.sync({ alter: true });
     console.log('All models synchronized.');
 
+// // === Batch 09 Gaps & Frontend Mounts ===
+app.use('/api/gap-ai-aiyieldpredictionmarketintel', require('./routes/batch09GapAi')); // // === Batch 09 Gaps & Frontend Mounts ===
+app.use('/api/gap-nonai-aiyieldpredictionmarketintel', require('./routes/batch09GapNonai')); // // === Batch 09 Gaps & Frontend Mounts ===
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
@@ -77,3 +85,5 @@ async function start() {
 start();
 
 module.exports = app;
+
+

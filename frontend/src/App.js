@@ -6,6 +6,12 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import FeaturePage from './pages/FeaturePage';
 import DetailPage from './pages/DetailPage';
+import AIYieldPrediction from './pages/AIYieldPrediction';
+import AIMarketTrendForecast from './pages/AIMarketTrendForecast';
+import AIPestOutbreakPrediction from './pages/AIPestOutbreakPrediction';
+import AIIrrigationOptimize from './pages/AIIrrigationOptimize';
+import AISoilAmendment from './pages/AISoilAmendment';
+import AIEquipmentMaintenance from './pages/AIEquipmentMaintenance';
 
 const features = [
   { key: 'yield-predictions', name: 'Yield Predictions', icon: '📊', color: '#10b981', desc: 'AI-powered crop yield forecasting', fields: ['farm_name','crop_type','predicted_yield','confidence','season','acreage','soil_type','irrigation_type'] },
@@ -50,6 +56,12 @@ function App() {
             <Route path={`/${f.key}/:id`} element={token ? <DetailPage feature={f} onLogout={handleLogout} /> : <Navigate to="/login" />} />
           </React.Fragment>
         ))}
+        <Route path="/ai/yield-prediction" element={token ? <AIYieldPrediction onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/ai/market-trend-forecast" element={token ? <AIMarketTrendForecast onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/ai/pest-outbreak-prediction" element={token ? <AIPestOutbreakPrediction onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/ai/irrigation-optimize" element={token ? <AIIrrigationOptimize onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/ai/soil-amendment" element={token ? <AISoilAmendment onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/ai/equipment-maintenance" element={token ? <AIEquipmentMaintenance onLogout={handleLogout} /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );
