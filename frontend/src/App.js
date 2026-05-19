@@ -12,6 +12,7 @@ import AIPestOutbreakPrediction from './pages/AIPestOutbreakPrediction';
 import AIIrrigationOptimize from './pages/AIIrrigationOptimize';
 import AISoilAmendment from './pages/AISoilAmendment';
 import AIEquipmentMaintenance from './pages/AIEquipmentMaintenance';
+import CustomViewsPage from './pages/CustomViewsPage';
 
 const features = [
   { key: 'yield-predictions', name: 'Yield Predictions', icon: '📊', color: '#10b981', desc: 'AI-powered crop yield forecasting', fields: ['farm_name','crop_type','predicted_yield','confidence','season','acreage','soil_type','irrigation_type'] },
@@ -62,6 +63,7 @@ function App() {
         <Route path="/ai/irrigation-optimize" element={token ? <AIIrrigationOptimize onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/ai/soil-amendment" element={token ? <AISoilAmendment onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/ai/equipment-maintenance" element={token ? <AIEquipmentMaintenance onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/custom-views" element={token ? <CustomViewsPage onLogout={handleLogout} /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );

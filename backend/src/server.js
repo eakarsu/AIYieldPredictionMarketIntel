@@ -25,6 +25,7 @@ app.use('/api/auth', authRoutes);
 // Direct AI endpoints
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/custom', require('./routes/customFeatures'));
+app.use('/api/custom-views', require('./routes/customViews'));
 
 // Feature route imports
 const routeMap = {
@@ -52,6 +53,15 @@ Object.entries(routeMap).forEach(([path, routeFile]) => {
   } catch (err) {
     console.warn(`Route file ./routes/${routeFile}.js not found: ${err.message}`);
   }
+});
+
+// 404 handler (must come AFTER all routes)
+app.use((req, res, next) => {
+  if (res.headersSent) return next();
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found', path: req.path });
+  }
+  next();
 });
 
 // Error handling middleware
