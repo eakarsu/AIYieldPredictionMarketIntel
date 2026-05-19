@@ -2,86 +2,86 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-3.5-turbo';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+function parseAIJson(text) {
+  try { return JSON.parse(text); } catch (e) {}
+  const stripped = text.replace(/```(?:json)?\n?/g, '').replace(/```/g, '').trim();
+  try { return JSON.parse(stripped); } catch (e) {}
+  const start = text.indexOf('{'); const end = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1) { try { return JSON.parse(text.slice(start, end + 1)); } catch (e) {} }
+  return null;
+}
 
 const featurePrompts = {
   yieldPrediction: (data) =>
-    `Analyze the following farm data and provide a yield prediction with confidence score.\nFarm: ${data.farm_name || 'N/A'}, Crop: ${data.crop_type || 'N/A'}, Acreage: ${data.acreage || 'N/A'}, Soil Type: ${data.soil_type || 'N/A'}, Irrigation: ${data.irrigation_type || 'N/A'}, Season: ${data.season || 'N/A'}.\nProvide predicted_yield (tons/acre), confidence (0-1), and reasoning.`,
+    `Analyze this farm data for a comprehensive yield prediction with confidence interval.
+Farm: ${data.farm_name || 'N/A'}, Crop: ${data.crop_type || 'N/A'}, Acreage: ${data.acreage || 'N/A'} acres, Soil: ${data.soil_type || 'N/A'}, Irrigation: ${data.irrigation_type || 'N/A'}, Season: ${data.season || 'N/A'}.
+Return JSON only: { "predicted_yield": number, "confidence": number, "confidence_interval": {"low": number, "high": number}, "yield_limiting_factors": [string], "optimization_recommendations": [string], "reasoning": string }`,
 
   marketPrice: (data) =>
-    `Analyze market conditions for ${data.commodity || 'the commodity'}. Current price: ${data.current_price || 'N/A'} per ${data.unit || 'unit'}, Market: ${data.market || 'N/A'}.\nProvide predicted_price, change_percent, supply_level (low/medium/high), and demand_level (low/medium/high).`,
+    `Analyze market conditions for ${data.commodity || 'commodity'}. Current: $${data.current_price || 'N/A'}/${data.unit || 'unit'}, Market: ${data.market || 'N/A'}.
+Return JSON only: { "predicted_price": number, "change_percent": number, "supply_level": "low|medium|high", "demand_level": "low|medium|high", "price_drivers": [string], "risk_factors": [string], "recommendation": string }`,
 
   weatherAnalysis: (data) =>
-    `Analyze weather impact on agriculture for location: ${data.location || 'N/A'}. Temperature: ${data.temperature || 'N/A'}°C, Humidity: ${data.humidity || 'N/A'}%, Rainfall: ${data.rainfall || 'N/A'}mm, Wind: ${data.wind_speed || 'N/A'}km/h.\nProvide a forecast, impact_level (low/medium/high/critical), and which crops are most affected.`,
+    `Analyze weather impact. Location: ${data.location || 'N/A'}, Temp: ${data.temperature || 'N/A'}C, Humidity: ${data.humidity || 'N/A'}%, Rainfall: ${data.rainfall || 'N/A'}mm.
+Return JSON only: { "forecast": string, "impact_level": "low|medium|high|critical", "crop_affected": string, "risk_windows": [string], "mitigation_actions": [string] }`,
 
   soilHealth: (data) =>
-    `Evaluate soil health for farm: ${data.farm_name || 'N/A'}. pH: ${data.ph_level || 'N/A'}, Nitrogen: ${data.nitrogen || 'N/A'}, Phosphorus: ${data.phosphorus || 'N/A'}, Potassium: ${data.potassium || 'N/A'}, Organic Matter: ${data.organic_matter || 'N/A'}%, Moisture: ${data.moisture || 'N/A'}%.\nProvide a health_score (0-100) and recommendations for improvement.`,
+    `Evaluate soil. Farm: ${data.farm_name || 'N/A'}, pH: ${data.ph_level || 'N/A'}, N: ${data.nitrogen || 'N/A'}, P: ${data.phosphorus || 'N/A'}, K: ${data.potassium || 'N/A'}, OM: ${data.organic_matter || 'N/A'}%, Moisture: ${data.moisture || 'N/A'}%.
+Return JSON only: { "health_score": number, "grade": string, "deficiencies": [string], "amendments_needed": [{"nutrient": string, "amount": string}], "crop_suitability": [string] }`,
 
   cropRecommendation: (data) =>
-    `Recommend the best crop for region: ${data.region || 'N/A'}. Consider soil requirements, water needs, market demand, and expected ROI.\nProvide recommended_crop, expected_roi (%), growth_period, water_needs, soil_requirement, market_demand level, and risk_level.`,
+    `Recommend best crop for region: ${data.region || 'N/A'}.
+Return JSON only: { "recommended_crop": string, "expected_roi": number, "growth_period": string, "water_needs": string, "soil_requirement": string, "market_demand": string, "risk_level": string, "alternative_crops": [{"crop": string, "roi": number}] }`,
 
   pestAlert: (data) =>
-    `Analyze pest threat: ${data.pest_name || 'N/A'} affecting ${data.crop_affected || 'N/A'} at ${data.location || 'N/A'}. Severity: ${data.severity || 'N/A'}.\nProvide treatment recommendations, spread_risk assessment, and status update.`,
+    `Analyze pest: ${data.pest_name || 'N/A'} on ${data.crop_affected || 'N/A'} at ${data.location || 'N/A'}. Severity: ${data.severity || 'N/A'}.
+Return JSON only: { "treatment": string, "spread_risk": "low|medium|high|critical", "status": string, "chemical_options": [string], "organic_options": [string], "economic_threshold": string }`,
 
   irrigationPlan: (data) =>
-    `Create an irrigation plan for farm: ${data.farm_name || 'N/A'}, Crop: ${data.crop_type || 'N/A'}, Season: ${data.season || 'N/A'}.\nProvide water_requirement (liters), optimal schedule, recommended method, efficiency_score (0-100), and cost_estimate.`,
+    `Create irrigation plan. Farm: ${data.farm_name || 'N/A'}, Crop: ${data.crop_type || 'N/A'}, Season: ${data.season || 'N/A'}.
+Return JSON only: { "water_requirement": number, "schedule": string, "method": string, "efficiency_score": number, "cost_estimate": number, "water_savings_percent": number }`,
 
   harvestPlan: (data) =>
-    `Plan harvest for farm: ${data.farm_name || 'N/A'}, Crop: ${data.crop_type || 'N/A'}. Expected quantity: ${data.expected_quantity || 'N/A'} tons.\nProvide optimal_date, quality_grade prediction, best market_window, storage_needed, and priority level.`,
+    `Plan harvest. Farm: ${data.farm_name || 'N/A'}, Crop: ${data.crop_type || 'N/A'}, Quantity: ${data.expected_quantity || 'N/A'} tons.
+Return JSON only: { "optimal_date": string, "quality_grade": string, "market_window": string, "storage_needed": number, "priority": string, "logistics_plan": string }`,
 
   marketTrend: (data) =>
-    `Analyze market trends for ${data.commodity || 'the commodity'} in ${data.market || 'the market'} over ${data.period || 'the recent period'}.\nProvide trend_direction (up/down/stable), price_change (%), volume_change (%), forecast_accuracy, and detailed analysis.`,
+    `Analyze market trends for ${data.commodity || 'commodity'} in ${data.market || 'market'}.
+Return JSON only: { "trend_direction": "up|down|stable|volatile", "price_change": number, "volume_change": number, "forecast_accuracy": number, "analysis": string, "price_targets": {"30d": number, "90d": number} }`,
 
   supplyChain: (data) =>
-    `Optimize supply chain for ${data.product || 'the product'} from ${data.origin || 'origin'} to ${data.destination || 'destination'}.\nProvide optimal transit_time, estimated cost, recommended carrier, and status assessment.`,
+    `Optimize supply chain for ${data.product || 'product'} from ${data.origin || 'origin'} to ${data.destination || 'destination'}.
+Return JSON only: { "transit_time": string, "cost": number, "carrier": string, "status": string, "bottlenecks": [string], "cost_reduction_opportunities": [string] }`,
 
   financialPlan: (data) =>
-    `Create a financial plan for farm: ${data.farm_name || 'N/A'}, Budget: $${data.budget || 'N/A'}, Period: ${data.period || 'N/A'}.\nProvide revenue_forecast, expense_forecast, profit_margin (%), roi (%), and risk_assessment.`,
+    `Create financial plan. Farm: ${data.farm_name || 'N/A'}, Budget: $${data.budget || 'N/A'}, Period: ${data.period || 'N/A'}.
+Return JSON only: { "revenue_forecast": number, "expense_forecast": number, "profit_margin": number, "roi": number, "risk_assessment": string, "break_even_point": string }`,
 
   satelliteData: (data) =>
-    `Analyze satellite data for farm: ${data.farm_name || 'N/A'}. NDVI: ${data.ndvi_index || 'N/A'}, Area: ${data.area_coverage || 'N/A'} hectares, Capture Date: ${data.capture_date || 'N/A'}.\nProvide crop_health assessment, anomaly_detected findings, and actionable recommendations.`,
+    `Analyze satellite data. Farm: ${data.farm_name || 'N/A'}, NDVI: ${data.ndvi_index || 'N/A'}, Area: ${data.area_coverage || 'N/A'} ha.
+Return JSON only: { "crop_health": "poor|fair|good|excellent", "anomaly_detected": string, "recommendations": string, "stress_zones": [string], "yield_impact_estimate": string }`,
 
   equipment: (data) =>
-    `Assess equipment status: ${data.name || 'N/A'} (${data.type || 'N/A'}). Status: ${data.status || 'N/A'}, Last Maintenance: ${data.last_maintenance || 'N/A'}, Utilization: ${data.utilization_rate || 'N/A'}%.\nProvide next_maintenance recommendation, cost_per_hour estimate, and optimization suggestions.`,
+    `Assess equipment: ${data.name || 'N/A'} (${data.type || 'N/A'}), Status: ${data.status || 'N/A'}.
+Return JSON only: { "next_maintenance": string, "cost_per_hour": number, "failure_risk": "low|medium|high", "maintenance_items": [string], "replacement_timeline": string }`,
 
   laborPlan: (data) =>
-    `Plan labor for task: ${data.task_name || 'N/A'}, Season: ${data.season || 'N/A'}, Department: ${data.department || 'N/A'}.\nProvide workers_needed, required skill_level, estimated duration, cost_estimate, and priority assessment.`,
+    `Plan labor for: ${data.task_name || 'N/A'}, Season: ${data.season || 'N/A'}.
+Return JSON only: { "workers_needed": number, "skill_level": string, "duration": string, "cost_estimate": number, "priority": string, "training_requirements": [string] }`,
 
   sustainability: (data) =>
-    `Evaluate sustainability for farm: ${data.farm_name || 'N/A'}. Carbon Footprint: ${data.carbon_footprint || 'N/A'}, Water Usage: ${data.water_usage || 'N/A'}, Renewable Energy: ${data.renewable_energy || 'N/A'}%.\nProvide biodiversity_score, waste_reduction recommendations, certification eligibility, and overall_score (0-100).`,
+    `Evaluate sustainability for farm: ${data.farm_name || 'N/A'}, Carbon: ${data.carbon_footprint || 'N/A'}, Water: ${data.water_usage || 'N/A'}.
+Return JSON only: { "biodiversity_score": number, "waste_reduction": number, "certification": string, "overall_score": number, "carbon_reduction_roadmap": [string], "esg_rating": string }`,
 };
 
 async function getAIAnalysis(feature, data) {
-  if (!OPENROUTER_API_KEY) {
-    throw new Error('OPENROUTER_API_KEY is not configured');
-  }
-
-  // Convert display names like "Market Price" to camelCase keys like "marketPrice"
+  if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY is not configured');
   const featureKey = feature.replace(/\s+(.)/g, (_, c) => c.toUpperCase()).replace(/^\w/, c => c.toLowerCase());
   const promptBuilder = featurePrompts[featureKey] || featurePrompts[feature];
-  if (!promptBuilder) {
-    throw new Error(`Unknown feature type: ${feature}`);
-  }
-
-  const userPrompt = promptBuilder(data);
-
-  const requestBody = {
-    model: OPENROUTER_MODEL,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are an expert agricultural AI analyst. Provide data-driven insights and predictions for farming operations. Always respond with structured JSON when possible.',
-      },
-      {
-        role: 'user',
-        content: userPrompt,
-      },
-    ],
-    temperature: 0.7,
-    max_tokens: 1024,
-  };
+  if (!promptBuilder) throw new Error(`Unknown feature type: ${feature}`);
 
   const response = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -91,7 +91,15 @@ async function getAIAnalysis(feature, data) {
       'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
       'X-Title': 'AI Yield Prediction & Market Intel',
     },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      messages: [
+        { role: 'system', content: 'You are an expert agricultural AI analyst. Always respond with valid JSON only, no markdown fences.' },
+        { role: 'user', content: promptBuilder(data) },
+      ],
+      temperature: 0.3,
+      max_tokens: 2048,
+    }),
   });
 
   if (!response.ok) {
@@ -100,19 +108,49 @@ async function getAIAnalysis(feature, data) {
   }
 
   const result = await response.json();
-
-  if (!result.choices || result.choices.length === 0) {
-    throw new Error('No response from OpenRouter API');
-  }
-
-  const content = result.choices[0].message.content;
-
-  // Attempt to parse as JSON; fall back to raw text
-  try {
-    return JSON.parse(content);
-  } catch {
-    return { analysis: content };
-  }
+  const content = result.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No response from OpenRouter API');
+  return parseAIJson(content) || { analysis: content };
 }
 
-module.exports = { getAIAnalysis };
+async function callOpenRouterRaw(systemPrompt, userPrompt, imageBase64 = null) {
+  if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY is not configured');
+
+  const userContent = imageBase64
+    ? [
+        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+        { type: 'text', text: userPrompt },
+      ]
+    : userPrompt;
+
+  const response = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+      'X-Title': 'AI Yield Prediction & Market Intel',
+    },
+    body: JSON.stringify({
+      model: 'anthropic/claude-3-5-sonnet-20241022',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      temperature: 0.3,
+      max_tokens: 2048,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`OpenRouter API error (${response.status}): ${errorBody}`);
+  }
+
+  const result = await response.json();
+  const content = result.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No response from OpenRouter API');
+  return parseAIJson(content) || { analysis: content };
+}
+
+module.exports = { getAIAnalysis, callOpenRouterRaw, parseAIJson };

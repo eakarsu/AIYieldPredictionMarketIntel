@@ -54,6 +54,46 @@ export default function Dashboard({ features, onLogout }) {
           </div>
         </div>
 
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Ad-Hoc AI Tools</h2>
+        <div className="features-grid" style={{ marginBottom: 32 }}>
+          <div className="feature-card" style={{ '--card-color': '#10b981' }} onClick={() => navigate('/ai/yield-prediction')}>
+            <div className="feature-card-icon">📊</div>
+            <h3>AI Yield Prediction</h3>
+            <p>Ad-hoc crop yield forecast (no record required)</p>
+            <span className="feature-card-arrow">&rarr;</span>
+          </div>
+          <div className="feature-card" style={{ '--card-color': '#059669' }} onClick={() => navigate('/ai/market-trend-forecast')}>
+            <div className="feature-card-icon">📈</div>
+            <h3>AI Market Trend Forecast</h3>
+            <p>Commodity market trend forecast for any input</p>
+            <span className="feature-card-arrow">&rarr;</span>
+          </div>
+          <div className="feature-card" style={{ '--card-color': '#ef4444' }} onClick={() => navigate('/ai/pest-outbreak-prediction')}>
+            <div className="feature-card-icon">🐛</div>
+            <h3>AI Pest Outbreak</h3>
+            <p>Pest-outbreak risk over a configurable horizon</p>
+            <span className="feature-card-arrow">&rarr;</span>
+          </div>
+          <div className="feature-card" style={{ '--card-color': '#0ea5e9' }} onClick={() => navigate('/ai/irrigation-optimize')}>
+            <div className="feature-card-icon">💧</div>
+            <h3>AI Irrigation Optimize</h3>
+            <p>Optimal irrigation schedule from crop and weather inputs</p>
+            <span className="feature-card-arrow">&rarr;</span>
+          </div>
+          <div className="feature-card" style={{ '--card-color': '#8b5cf6' }} onClick={() => navigate('/ai/soil-amendment')}>
+            <div className="feature-card-icon">🌱</div>
+            <h3>AI Soil Amendment</h3>
+            <p>Recommend amendments from soil-test results</p>
+            <span className="feature-card-arrow">&rarr;</span>
+          </div>
+          <div className="feature-card" style={{ '--card-color': '#78716c' }} onClick={() => navigate('/ai/equipment-maintenance')}>
+            <div className="feature-card-icon">🚜</div>
+            <h3>AI Equipment Maintenance</h3>
+            <p>Predict equipment failure risk and schedule maintenance</p>
+            <span className="feature-card-arrow">&rarr;</span>
+          </div>
+        </div>
+
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Feature Modules</h2>
         <div className="features-grid">
           {features.map((f) => (
