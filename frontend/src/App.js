@@ -14,6 +14,9 @@ import AISoilAmendment from './pages/AISoilAmendment';
 import AIEquipmentMaintenance from './pages/AIEquipmentMaintenance';
 import CustomViewsPage from './pages/CustomViewsPage';
 
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
 const features = [
   { key: 'yield-predictions', name: 'Yield Predictions', icon: '📊', color: '#10b981', desc: 'AI-powered crop yield forecasting', fields: ['farm_name','crop_type','predicted_yield','confidence','season','acreage','soil_type','irrigation_type'] },
   { key: 'market-prices', name: 'Market Prices', icon: '💰', color: '#f59e0b', desc: 'Real-time commodity price tracking', fields: ['commodity','current_price','predicted_price','change_percent','market','supply_level','demand_level','unit'] },
@@ -49,6 +52,9 @@ function App() {
     <Router>
       <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <Routes>
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
         <Route path="/login" element={token ? <Navigate to="/" /> : <Login onLogin={handleLogin} />} />
         <Route path="/" element={token ? <Dashboard features={features} onLogout={handleLogout} /> : <Navigate to="/login" />} />
         {features.map(f => (
