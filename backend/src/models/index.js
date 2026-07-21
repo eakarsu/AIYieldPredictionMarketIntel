@@ -6,7 +6,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'agriyield_db',
   process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'postgres',
+  process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
@@ -232,10 +232,18 @@ const MarketPriceAlert = sequelize.define('MarketPriceAlert', {
   message: TEXT,
 }, { tableName: 'market_price_alerts' });
 
+const AuthUser = sequelize.define('AuthUser', {
+  id: { type: I, autoIncrement: true, primaryKey: true },
+  email: { type: S, allowNull: false, unique: true },
+  password_hash: { type: S, allowNull: false },
+  name: { type: S, allowNull: false },
+  role: { type: S, allowNull: false, defaultValue: 'viewer' },
+}, { tableName: 'auth_users' });
+
 module.exports = {
   sequelize, Sequelize,
   YieldPrediction, MarketPrice, WeatherAnalysis, SoilHealth, CropRecommendation,
   PestAlert, IrrigationPlan, HarvestPlan, MarketTrend, SupplyChain,
   FinancialPlan, SatelliteData, Equipment, LaborPlan, Sustainability,
-  AiResult, MarketPriceAlert,
+  AiResult, MarketPriceAlert, AuthUser,
 };

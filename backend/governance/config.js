@@ -1,0 +1,31 @@
+module.exports={
+  caseType:'approved_yield_market_plan',initialState:'field_request_registered',
+  states:['field_request_registered','sources_reconciled','constraints_locked','historical_replay_completed','forecast_recorded','market_scenario_recorded','plan_proposed','agronomist_review','plan_approved','execution_observed','execution_failed','offline_pending','recovery_verified','outcome_reconciled','closed'],
+  createRoles:['agricultural_analyst','farm_manager'],assessmentRoles:['agricultural_analyst','agronomy_reviewer','market_reviewer'],auditRoles:['farm_manager','privacy_officer','auditor'],connectorRoles:['integration_operator','farm_manager'],
+  evidenceKinds:['farm_record_snapshot','satellite_version','soil_sensor_snapshot','weather_snapshot','market_feed_snapshot','constraint_manifest','historical_replay','yield_forecast','market_scenario','uncertainty_report','agronomist_review','manager_approval','execution_receipt','failure_record','offline_receipt','recovery_record','outcome_report'],
+  requiredSignals:['farmVersion','satelliteVersion','soilVersion','weatherVersion','marketVersion','modelVersion','policyVersion','sourceFreshnessSeconds','yieldMape','priceMape','constraintViolations','p95LatencyMs','missedEventRate','confidenceCoverage','offlineStatus'],
+  professionalBoundary:'Forecasts are advisory and uncertain. Qualified agronomists and farm managers retain authority; the API never irrigates, treats crops, trades commodities, buys inputs, or dispatches labor.',
+  connectors:[{name:'farm_management',purpose:'versioned field, crop, and realized yield records'},{name:'satellite',purpose:'imagery and vegetation-index manifests'},{name:'soil_sensor',purpose:'timestamped soil observations'},{name:'weather',purpose:'forecast and observed weather receipts'},{name:'market_feed',purpose:'versioned price, demand, and market data'},{name:'erp_wms_tms',purpose:'inventory, logistics, and fulfillment status'},{name:'financial',purpose:'approved budget and realized outcome receipts'},{name:'notification',purpose:'approved stakeholder delivery receipts'}],
+  transitions:[
+    {from:'field_request_registered',action:'reconcile_sources',to:'sources_reconciled',roles:['agricultural_analyst','integration_operator'],requiresEvidence:true},
+    {from:'sources_reconciled',action:'lock_constraints',to:'constraints_locked',roles:['agronomy_reviewer'],requiresEvidence:true,dualControl:true},
+    {from:'constraints_locked',action:'record_historical_replay',to:'historical_replay_completed',roles:['agricultural_analyst','market_reviewer'],requiresEvidence:true},
+    {from:'historical_replay_completed',action:'record_forecast',to:'forecast_recorded',roles:['agricultural_analyst'],requiresEvidence:true},
+    {from:'forecast_recorded',action:'record_market_scenario',to:'market_scenario_recorded',roles:['market_reviewer'],requiresEvidence:true},
+    {from:'market_scenario_recorded',action:'propose_plan',to:'plan_proposed',roles:['agricultural_analyst'],requiresEvidence:true},
+    {from:'plan_proposed',action:'submit_agronomist_review',to:'agronomist_review',roles:['agronomy_reviewer','market_reviewer'],requiresEvidence:true,dualControl:true},
+    {from:'agronomist_review',action:'approve_plan_observation',to:'plan_approved',roles:['farm_manager','agronomy_reviewer'],requiresEvidence:true,dualControl:true},
+    {from:'plan_approved',action:'record_execution',to:'execution_observed',roles:['integration_operator','farm_manager'],requiresEvidence:true},
+    {from:'plan_approved',action:'record_failure',to:'execution_failed',roles:['integration_operator','farm_manager'],requiresEvidence:true},
+    {from:'plan_approved',action:'record_offline_pending',to:'offline_pending',roles:['integration_operator'],requiresEvidence:true},
+    {from:'execution_failed',action:'verify_recovery',to:'recovery_verified',roles:['agronomy_reviewer','farm_manager'],requiresEvidence:true,dualControl:true},
+    {from:'offline_pending',action:'verify_recovery',to:'recovery_verified',roles:['agronomy_reviewer','farm_manager'],requiresEvidence:true,dualControl:true},
+    {from:'execution_observed',action:'reconcile_outcome',to:'outcome_reconciled',roles:['market_reviewer','farm_manager'],requiresEvidence:true,dualControl:true},
+    {from:'recovery_verified',action:'reconcile_outcome',to:'outcome_reconciled',roles:['market_reviewer','farm_manager'],requiresEvidence:true,dualControl:true},
+    {from:'outcome_reconciled',action:'close_plan',to:'closed',roles:['farm_manager','auditor'],requiresEvidence:true}
+  ],
+  acceptedFixture:{farmVersion:'f1',satelliteVersion:'s1',soilVersion:'so1',weatherVersion:'w1',marketVersion:'mk1',modelVersion:'m1',policyVersion:'p1',sourceFreshnessSeconds:120,yieldMape:0.09,priceMape:0.08,constraintViolations:0,p95LatencyMs:700,missedEventRate:0.01,confidenceCoverage:0.93,offlineStatus:'reconciled'},
+  rejectedFixture:{farmVersion:'f1',satelliteVersion:'s1',soilVersion:'so1',weatherVersion:'w1',marketVersion:'mk1',modelVersion:'m1',policyVersion:'p1',sourceFreshnessSeconds:120,yieldMape:0.22,priceMape:0.08,constraintViolations:0,p95LatencyMs:700,missedEventRate:0.01,confidenceCoverage:0.93,offlineStatus:'reconciled'},
+  readyDisposition:'independent_agronomist_and_market_review_required',holdDisposition:'accuracy_constraint_freshness_or_offline_hold',decisionField:'farmActionCommand',
+  assess:x=>{const freshness=Number(x.sourceFreshnessSeconds),yieldMape=Number(x.yieldMape),priceMape=Number(x.priceMape),violations=Number(x.constraintViolations),latency=Number(x.p95LatencyMs),missed=Number(x.missedEventRate),coverage=Number(x.confidenceCoverage);const ready=freshness<=900&&yieldMape<=0.15&&priceMape<=0.15&&violations===0&&latency<=1500&&missed<=0.03&&coverage>=0.9&&x.offlineStatus==='reconciled';return{disposition:ready?'independent_agronomist_and_market_review_required':'accuracy_constraint_freshness_or_offline_hold',farmActionCommand:null,commodityTradeCommand:null,inputPurchaseCommand:null,metrics:{freshness,yieldMape,priceMape,violations,latency,missed,coverage},versions:{farm:x.farmVersion,satellite:x.satelliteVersion,soil:x.soilVersion,weather:x.weatherVersion,market:x.marketVersion,model:x.modelVersion}};}
+};

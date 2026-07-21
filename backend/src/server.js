@@ -1,99 +1,66 @@
-const path = require('path');
+const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+const { validateRuntime } = require('../governance/runtime');
+validateRuntime();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const auth = require('./middleware/auth');
 const { sequelize } = require('./models');
+const { createProviderGate } = require('../governance/providerGate');
 
 const app = express();
-const PORT = process.env.BACKEND_PORT || 3001;
+const port = Number(process.env.BACKEND_PORT || 3001);
+const origins = String(process.env.CORS_ORIGINS || 'http://localhost:3000')
+  .split(',').map((value) => value.trim()).filter(Boolean);
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'same-site' } }));
+app.use(cors({ origin(origin, callback) {
+  if (!origin || origins.includes(origin)) return callback(null, true);
+  return callback(new Error('Origin is not allowed by CORS.'));
+}, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'AIYieldPredictionMarketIntel', timestamp: new Date().toISOString() }));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/governance', require('../governance/router'));
 
-// Auth routes
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
+app.use('/api', auth);
+const protectedRoutes = [
+  ['yield-predictions','yieldPredictions'],['market-prices','marketPrices'],
+  ['weather-analysis','weatherAnalysis'],['soil-health','soilHealth'],
+  ['crop-recommendations','cropRecommendations'],['pest-alerts','pestAlerts'],
+  ['irrigation-plans','irrigationPlans'],['harvest-plans','harvestPlans'],
+  ['market-trends','marketTrends'],['supply-chain','supplyChain'],
+  ['financial-plans','financialPlans'],['satellite-data','satelliteData'],
+  ['equipment','equipment'],['labor-plans','laborPlans'],['sustainability','sustainability']
+];
+for (const [mount, moduleName] of protectedRoutes) app.use(`/api/${mount}`, require(`./routes/${moduleName}`));
 
-// Direct AI endpoints
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/custom', require('./routes/customFeatures'));
-app.use('/api/custom-views', require('./routes/customViews'));
-
-// Feature route imports
-const routeMap = {
-  'yield-predictions': 'yieldPredictions',
-  'market-prices': 'marketPrices',
-  'weather-analysis': 'weatherAnalysis',
-  'soil-health': 'soilHealth',
-  'crop-recommendations': 'cropRecommendations',
-  'pest-alerts': 'pestAlerts',
-  'irrigation-plans': 'irrigationPlans',
-  'harvest-plans': 'harvestPlans',
-  'market-trends': 'marketTrends',
-  'supply-chain': 'supplyChain',
-  'financial-plans': 'financialPlans',
-  'satellite-data': 'satelliteData',
-  'equipment': 'equipment',
-  'labor-plans': 'laborPlans',
-  'sustainability': 'sustainability',
-};
-
-Object.entries(routeMap).forEach(([path, routeFile]) => {
-  try {
-    const route = require(`./routes/${routeFile}`);
-    app.use(`/api/${path}`, route);
-  } catch (err) {
-    console.warn(`Route file ./routes/${routeFile}.js not found: ${err.message}`);
-  }
-});
-
-// 404 handler (must come AFTER all routes)
-app.use((req, res, next) => {
-  if (res.headersSent) return next();
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Not found', path: req.path });
-  }
-  next();
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error', message: err.message });
-});
-
-// Database sync and server start
-async function start() {
-  try {
-    await sequelize.authenticate();
-    console.log('Database connection established successfully.');
-
-    await sequelize.sync({ alter: true });
-    console.log('All models synchronized.');
-
-// // === Batch 09 Gaps & Frontend Mounts ===
-app.use('/api/gap-ai-aiyieldpredictionmarketintel', require('./routes/batch09GapAi')); // // === Batch 09 Gaps & Frontend Mounts ===
-app.use('/api/gap-nonai-aiyieldpredictionmarketintel', require('./routes/batch09GapNonai')); // // === Batch 09 Gaps & Frontend Mounts ===
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  }
+const providerGate = createProviderGate(['/api/ai','/api/custom','/api/gap']);
+app.use(providerGate);
+if (process.env.ENABLE_LEGACY_PROVIDER_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
+  app.use('/api/ai', require('./routes/ai'));
+  app.use('/api/custom', require('./routes/customFeatures'));
+  app.use('/api/custom-views', require('./routes/customViews'));
+  app.use('/api/gap-ai-aiyieldpredictionmarketintel', require('./routes/batch09GapAi'));
+  app.use('/api/gap-nonai-aiyieldpredictionmarketintel', require('./routes/batch09GapNonai'));
 }
 
-start();
+app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
+app.use((error, _req, res, _next) => res.status(error.status || 500).json({ error: error.status ? error.message : 'Internal server error' }));
 
-module.exports = app;
-
-
+async function start() {
+  await sequelize.authenticate();
+  if (process.env.ENABLE_LEGACY_SCHEMA_BOOTSTRAP === 'true' && process.env.NODE_ENV !== 'production') {
+    await sequelize.sync();
+  }
+  return app.listen(port, () => console.log(`Yield Prediction API listening on ${port}`));
+}
+if (require.main === module) start().catch((error) => {
+  console.error('Startup failed:', error.message);
+  process.exitCode = 1;
+});
+module.exports = { app, start };

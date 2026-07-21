@@ -1,5 +1,10 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
-const { sequelize, YieldPrediction, MarketPrice, WeatherAnalysis, SoilHealth, CropRecommendation, PestAlert, IrrigationPlan, HarvestPlan, MarketTrend, SupplyChain, FinancialPlan, SatelliteData, Equipment, LaborPlan, Sustainability } = require('../models');
+const bcrypt = require('bcryptjs');
+const { sequelize, YieldPrediction, MarketPrice, WeatherAnalysis, SoilHealth, CropRecommendation, PestAlert, IrrigationPlan, HarvestPlan, MarketTrend, SupplyChain, FinancialPlan, SatelliteData, Equipment, LaborPlan, Sustainability, AuthUser } = require('../models');
+
+if (process.env.NODE_ENV === 'production' || process.env.ALLOW_DEMO_SEED !== 'true') {
+  throw new Error('Demo seed is disabled; set ALLOW_DEMO_SEED=true only for an isolated non-production database.');
+}
 
 const seedData = {
   YieldPrediction: [
@@ -283,6 +288,11 @@ const models = {
     await sequelize.sync({ force: true });
     console.log('Database synced (tables recreated)\n');
 
+    const email = process.env.ADMIN_EMAIL || process.env.DEMO_EMAIL || process.env.DEFAULT_EMAIL;
+    const password = process.env.ADMIN_PASSWORD || process.env.DEMO_PASSWORD || process.env.DEFAULT_PASSWORD;
+    if (!email || !password) throw new Error('Explicit demo administrator credentials are required');
+    await AuthUser.create({ email, password_hash: await bcrypt.hash(password, 10), name: 'Runtime Administrator', role: 'admin' });
+
     for (const [modelName, data] of Object.entries(seedData)) {
       const model = models[modelName];
       if (model) {
@@ -292,7 +302,6 @@ const models = {
     }
 
     console.log('\nAll seed data loaded successfully!');
-    console.log('Default login: admin@agriyield.com / admin123\n');
     await sequelize.close();
     process.exit(0);
   } catch (error) {
