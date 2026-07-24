@@ -1,6 +1,7 @@
 const express = require('express');
 const { aiRateLimiter } = require('../middleware/rateLimiter');
 const { getAIAnalysis, callOpenRouterRaw } = require('../services/openrouter');
+const { AiResult } = require('../models');
 const router = express.Router();
 
 // Helper: return 503 for missing-key errors, 500 otherwise
@@ -13,10 +14,30 @@ function sendAiError(res, err, label) {
   return res.status(500).json({ error: msg });
 }
 
-// POST /api/ai/yield-prediction — direct ad-hoc yield prediction without DB persistence
+router.get('/history', async (req, res) => {
+  try {
+    const history = await AiResult.findAll({
+      where: { created_by: req.user.id },
+      order: [['createdAt', 'DESC']],
+      limit: Math.min(Number(req.query.limit) || 25, 100),
+    });
+    res.json({ history });
+  } catch (err) {
+    return sendAiError(res, err, 'history');
+  }
+});
+
+// POST /api/ai/yield-prediction — authenticated, durable yield prediction
 router.post('/yield-prediction', aiRateLimiter, async (req, res) => {
   try {
     const result = await getAIAnalysis('yieldPrediction', req.body || {});
+    await AiResult.create({
+      feature: 'yield-prediction',
+      input_data: req.body || {},
+      output_data: result,
+      model_used: process.env.OPENROUTER_MODEL,
+      created_by: req.user.id,
+    });
     res.json({ success: true, data: result });
   } catch (err) {
     return sendAiError(res, err, 'yield-prediction');

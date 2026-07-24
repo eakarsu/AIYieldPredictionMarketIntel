@@ -1,9 +1,15 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+function openRouterConfig() {
+  const apiKey = String(process.env.OPENROUTER_API_KEY || '').trim();
+  const model = String(process.env.OPENROUTER_MODEL || '').trim();
+  const baseUrl = String(process.env.OPENROUTER_BASE_URL || '').replace(/\/+$/, '');
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY is not configured');
+  if (!model) throw new Error('OPENROUTER_MODEL is not configured');
+  if (baseUrl !== 'https://openrouter.ai/api/v1') throw new Error('OPENROUTER_BASE_URL must be https://openrouter.ai/api/v1');
+  return { apiKey, model, endpoint: `${baseUrl}/chat/completions` };
+}
 
 function parseAIJson(text) {
   try { return JSON.parse(text); } catch (e) {}
@@ -78,21 +84,21 @@ Return JSON only: { "biodiversity_score": number, "waste_reduction": number, "ce
 };
 
 async function getAIAnalysis(feature, data) {
-  if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY is not configured');
+  const { apiKey, model, endpoint } = openRouterConfig();
   const featureKey = feature.replace(/\s+(.)/g, (_, c) => c.toUpperCase()).replace(/^\w/, c => c.toLowerCase());
   const promptBuilder = featurePrompts[featureKey] || featurePrompts[feature];
   if (!promptBuilder) throw new Error(`Unknown feature type: ${feature}`);
 
-  const response = await fetch(OPENROUTER_URL, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
       'X-Title': 'AI Yield Prediction & Market Intel',
     },
     body: JSON.stringify({
-      model: OPENROUTER_MODEL,
+      model,
       messages: [
         { role: 'system', content: 'You are an expert agricultural AI analyst. Always respond with valid JSON only, no markdown fences.' },
         { role: 'user', content: promptBuilder(data) },
@@ -114,7 +120,7 @@ async function getAIAnalysis(feature, data) {
 }
 
 async function callOpenRouterRaw(systemPrompt, userPrompt, imageBase64 = null) {
-  if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY is not configured');
+  const { apiKey, model, endpoint } = openRouterConfig();
 
   const userContent = imageBase64
     ? [
@@ -123,16 +129,16 @@ async function callOpenRouterRaw(systemPrompt, userPrompt, imageBase64 = null) {
       ]
     : userPrompt;
 
-  const response = await fetch(OPENROUTER_URL, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
       'X-Title': 'AI Yield Prediction & Market Intel',
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-3-5-sonnet-20241022',
+      model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
