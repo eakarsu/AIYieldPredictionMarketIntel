@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import NativeAIPresets from '../components/NativeAIPresets';
+import AIReport from '../components/AIReport';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { aiIrrigationOptimize } from '../services/api';
@@ -66,6 +68,7 @@ export default function AIIrrigationOptimize({ onLogout }) {
 
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
           <form onSubmit={submit}>
+            <NativeAIPresets feature="AIIrrigationOptimize" disabled={loading} onFill={(fields) => setForm(fields)} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               <div className="form-group"><label>Crop *</label><input value={form.crop} onChange={set('crop')} required /></div>
               <div className="form-group"><label>Acreage</label><input type="number" value={form.acreage} onChange={set('acreage')} /></div>
@@ -89,9 +92,7 @@ export default function AIIrrigationOptimize({ onLogout }) {
         {result && (
           <div className="card" style={{ padding: 20 }}>
             <h3>Irrigation Plan</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 8 }}>
-              {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
-            </pre>
+            <AIReport response={result} title="AI result" />
           </div>
         )}
       </div>

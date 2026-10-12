@@ -21,20 +21,33 @@ function isBadgeField(field) {
   return ['status', 'severity', 'impact_level', 'risk_level', 'spread_risk', 'trend_direction', 'supply_level', 'demand_level', 'market_demand', 'quality_grade', 'priority', 'crop_health', 'anomaly_detected', 'skill_level', 'risk_assessment'].includes(field);
 }
 
+// The standard routes return { data: rows }; some list routes paginate that
+// same collection as { data: { data: rows, pagination } }.
+export function listRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  throw new Error('The list response does not contain records.');
+}
+
 export default function FeaturePage({ feature, onLogout }) {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [newItem, setNewItem] = useState({});
 
   const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError('');
       const res = await getItems(feature.key, search);
-      setItems(res.data.data || []);
+      setItems(listRows(res.data));
     } catch (err) {
+      setItems([]);
+      setLoadError(err.message || 'Failed to load data');
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
@@ -107,6 +120,8 @@ export default function FeaturePage({ feature, onLogout }) {
         <div className="data-table-container">
           {loading ? (
             <div className="ai-loading"><div className="spinner"></div> Loading...</div>
+          ) : loadError ? (
+            <div className="empty-state" role="alert">Unable to load records: {loadError}</div>
           ) : items.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">{feature.icon}</div>
@@ -129,9 +144,9 @@ export default function FeaturePage({ feature, onLogout }) {
                     {displayFields.map(f => (
                       <td key={f}>
                         {isBadgeField(f) ? (
-                          <span className={`badge ${getBadgeClass(item[f])}`}>{item[f] || '-'}</span>
+                          <span className={`badge ${getBadgeClass(item[f])}`}>{item[f] ?? '-'}</span>
                         ) : (
-                          item[f] || '-'
+                          item[f] ?? '-'
                         )}
                       </td>
                     ))}

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "AiAdvisoryChatForAgronomistsPage",
+    "id": "gap-ai-aiyieldpredictionmarketintel/ai-advisory-chat-for-agronomists",
+    "title": "AI advisory chat for agronomists",
+    "description": "Prepare a professional advisory report for ai advisory chat for agronomists using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "CoOpAggregationAndJointSalesPage",
+    "id": "gap-nonai-aiyieldpredictionmarketintel/co-op-aggregation-and-joint-sales",
+    "title": "Co-op aggregation and joint sales",
+    "description": "Prepare a professional advisory report for co-op aggregation and joint sales using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "ComplianceAndTraceabilityReportingPage",
+    "id": "gap-nonai-aiyieldpredictionmarketintel/compliance-and-traceability-reporting",
+    "title": "Compliance and traceability reporting",
+    "description": "Prepare a professional advisory report for compliance and traceability reporting using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "CropInsuranceClaimFilingWorkflowPage",
+    "id": "gap-nonai-aiyieldpredictionmarketintel/crop-insurance-claim-filing-workflow",
+    "title": "Crop insurance claim filing workflow",
+    "description": "Prepare a professional advisory report for crop insurance claim filing workflow using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "DirectCommodityFuturesBrokerIntegrationPage",
+    "id": "gap-nonai-aiyieldpredictionmarketintel/direct-commodity-futures-broker-integration",
+    "title": "Direct commodity futures broker integration",
+    "description": "Prepare a professional advisory report for direct commodity futures broker integration using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "FieldByFieldNutrientMappingPage",
+    "id": "gap-ai-aiyieldpredictionmarketintel/field-by-field-nutrient-mapping",
+    "title": "Field-by-field nutrient mapping",
+    "description": "Prepare a professional advisory report for field-by-field nutrient mapping using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "GisFieldPolygonEditorPage",
+    "id": "gap-nonai-aiyieldpredictionmarketintel/gis-field-polygon-editor",
+    "title": "GIS field-polygon editor",
+    "description": "Prepare a professional advisory report for gis field-polygon editor using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "MobileAppOfflineFieldModeEndpointsPage",
+    "id": "gap-nonai-aiyieldpredictionmarketintel/mobile-app-offline-field-mode-endpoints",
+    "title": "Mobile app / offline field-mode endpoints",
+    "description": "Prepare a professional advisory report for mobile app / offline field-mode endpoints using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  },
+  {
+    "name": "MultiModalYieldFusionAcrossSatelliteSoilSensorsWeathPage",
+    "id": "gap-ai-aiyieldpredictionmarketintel/multi-modal-yield-fusion-across-satellite-soil-sensors-weath",
+    "title": "Multi-modal yield fusion across satellite + soil sensors + weather",
+    "description": "Prepare a professional advisory report for multi-modal yield fusion across satellite + soil sensors + weather using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": []
+  }
+]

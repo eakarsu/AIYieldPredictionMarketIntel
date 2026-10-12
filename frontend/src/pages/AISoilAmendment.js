@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import NativeAIPresets from '../components/NativeAIPresets';
+import AIReport from '../components/AIReport';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { aiSoilAmendment } from '../services/api';
@@ -64,6 +66,7 @@ export default function AISoilAmendment({ onLogout }) {
 
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
           <form onSubmit={submit}>
+            <NativeAIPresets feature="AISoilAmendment" disabled={loading} onFill={(fields) => setForm(fields)} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               <div className="form-group"><label>pH</label><input type="number" step="0.1" value={form.ph} onChange={set('ph')} /></div>
               <div className="form-group"><label>Nitrogen (ppm)</label><input type="number" value={form.nitrogen} onChange={set('nitrogen')} /></div>
@@ -87,9 +90,7 @@ export default function AISoilAmendment({ onLogout }) {
         {result && (
           <div className="card" style={{ padding: 20 }}>
             <h3>Soil Amendment Plan</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 8 }}>
-              {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
-            </pre>
+            <AIReport response={result} title="AI result" />
           </div>
         )}
       </div>

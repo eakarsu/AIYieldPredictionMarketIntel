@@ -1,5 +1,6 @@
 // // === Batch 09 Gaps & Frontend Mounts ===
 import React, { useState } from 'react';
+import AIReport from '../../components/AIReport';
 
 export default function PredictiveEquipmentFailureWithPartsPreOrderingPage() {
   const [input, setInput] = useState('');
@@ -27,6 +28,7 @@ export default function PredictiveEquipmentFailureWithPartsPreOrderingPage() {
     <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Predictive equipment failure with parts pre-ordering</h1>
       <p style={{ color: '#666', marginBottom: 16 }}>Generated gap feature for AIYieldPredictionMarketIntel.</p>
+      <div className="ai-preset-bar"><div><strong>Example prompts</strong><p>Choose a complete draft prompt, then review it before running AI.</p></div><div className="ai-actions"><button type="button" className="btn btn-secondary" disabled={loading} onClick={() => setInput("Review predictive equipment failure with parts pre-ordering for a 120-acre corn farm in central Iowa. Include current observations, assumptions, practical actions, and what evidence is still needed.")}>Field review</button><button type="button" className="btn btn-secondary" disabled={loading} onClick={() => setInput("Assess predictive equipment failure with parts pre-ordering for an 85-acre rainfed wheat farm in western Kansas. Compare near-term risks, resource limits, and verification steps.")}>Risk review</button><button type="button" className="btn btn-secondary" disabled={loading} onClick={() => setInput("Prepare an executive brief on predictive equipment failure with parts pre-ordering for an 18-acre drip-irrigated tomato operation in California. Show options, tradeoffs, owners, and next steps.")}>Executive brief</button></div></div>
       <textarea
         value={input}
         onChange={e => setInput(e.target.value)}
@@ -42,11 +44,7 @@ export default function PredictiveEquipmentFailureWithPartsPreOrderingPage() {
         {loading ? 'Running...' : 'Run AI'}
       </button>
       {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
-      {result && (
-        <pre style={{ marginTop: 16, padding: 12, background: '#f4f4f4', borderRadius: 6, overflow: 'auto', maxHeight: 500 }}>
-{JSON.stringify(result, null, 2)}
-        </pre>
-      )}
+      {result !== null && <AIReport response={result} title="AI result" />}
     </div>
   );
 }

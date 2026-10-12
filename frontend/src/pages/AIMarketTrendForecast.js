@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import NativeAIPresets from '../components/NativeAIPresets';
+import AIReport from '../components/AIReport';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { aiMarketTrendForecast } from '../services/api';
@@ -57,6 +59,7 @@ export default function AIMarketTrendForecast({ onLogout }) {
 
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
           <form onSubmit={submit}>
+            <NativeAIPresets feature="AIMarketTrendForecast" disabled={loading} onFill={(fields) => setForm(fields)} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               <div className="form-group"><label>Commodity *</label><input value={form.commodity} onChange={set('commodity')} placeholder="e.g. corn" required /></div>
               <div className="form-group"><label>Market</label><input value={form.market} onChange={set('market')} placeholder="e.g. CBOT, EU spot" /></div>
@@ -80,11 +83,7 @@ export default function AIMarketTrendForecast({ onLogout }) {
         {result && (
           <div className="card" style={{ padding: 20 }}>
             <h3>Trend Forecast</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 8 }}>
-              {typeof (result.forecast || result.result) === 'string'
-                ? (result.forecast || result.result)
-                : JSON.stringify(result, null, 2)}
-            </pre>
+            <AIReport response={result} title="AI result" />
           </div>
         )}
       </div>

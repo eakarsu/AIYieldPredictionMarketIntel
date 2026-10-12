@@ -21,9 +21,13 @@ export default function Login({ onLogin }) {
     }
   };
 
+  const demoEmail = process.env.REACT_APP_DEMO_EMAIL;
+  const demoPassword = process.env.REACT_APP_DEMO_PASSWORD;
+  const demoAvailable = Boolean(demoEmail && demoPassword);
   const fillCredentials = () => {
-    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
-    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
+    if (!demoAvailable) return;
+    setEmail(demoEmail);
+    setPassword(demoPassword);
   };
 
   return (
@@ -46,9 +50,8 @@ export default function Login({ onLogin }) {
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
-          <button type="button" className="btn btn-fill" onClick={fillCredentials}>
-            Auto Fill Demo Credentials
-          </button>
+          <button type="button" className="btn btn-fill" onClick={fillCredentials} disabled={loading || !demoAvailable}>Fill demo credentials</button>
+          {!demoAvailable && <p role="status">Demo credentials are not configured for this frontend. Sign in with an existing account.</p>}
         </form>
       </div>
     </div>

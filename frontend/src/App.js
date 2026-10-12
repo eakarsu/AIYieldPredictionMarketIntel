@@ -1,3 +1,4 @@
+import AIReportLibrary from "./components/AIReportLibrary";
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -49,7 +50,7 @@ function App() {
   };
 
   return (
-    <Router>
+    <><AIReportLibrary floating /><Router>
       <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <Routes>
         <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
@@ -71,7 +72,7 @@ function App() {
         <Route path="/ai/equipment-maintenance" element={token ? <AIEquipmentMaintenance onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/custom-views" element={token ? <CustomViewsPage onLogout={handleLogout} /> : <Navigate to="/login" />} />
       </Routes>
-    </Router>
+    </Router></>
   );
 }
 

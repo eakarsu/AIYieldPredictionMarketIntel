@@ -2,83 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getItem, updateItem, deleteItem, analyzeItem } from '../services/api';
+import AIReport from '../components/AIReport';
 
 function formatFieldName(field) {
   return field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function renderAIAnalysis(analysis) {
-  if (!analysis) return null;
-
-  if (typeof analysis === 'string') {
-    return <div className="ai-text-block">{analysis}</div>;
-  }
-
-  if (analysis.analysis && typeof analysis.analysis === 'string') {
-    const sections = analysis.analysis.split('\n\n');
-    return (
-      <div>
-        {sections.map((section, i) => {
-          const lines = section.split('\n');
-          const title = lines[0]?.replace(/^[#*\s]+/, '').replace(/[*#]+/g, '');
-          const content = lines.slice(1).join('\n');
-          return (
-            <div key={i} className="ai-section">
-              {title && <div className="ai-section-title">{title}</div>}
-              <div className="ai-text-block">{content || title}</div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // Render object keys as structured cards
-  const entries = Object.entries(analysis).filter(([k]) => k !== 'analysis');
-  if (entries.length === 0 && analysis.analysis) {
-    return renderAIAnalysis(analysis.analysis);
-  }
-
-  const simpleEntries = entries.filter(([, v]) => typeof v !== 'object');
-  const complexEntries = entries.filter(([, v]) => typeof v === 'object' && v !== null);
-
-  return (
-    <div>
-      {simpleEntries.length > 0 && (
-        <div className="ai-kv-grid" style={{ marginBottom: complexEntries.length > 0 ? 24 : 0 }}>
-          {simpleEntries.map(([key, value]) => (
-            <div key={key} className="ai-kv-item">
-              <div className="kv-label">{formatFieldName(key)}</div>
-              <div className="kv-value">{String(value)}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {complexEntries.map(([key, value]) => (
-        <div key={key} className="ai-section">
-          <div className="ai-section-title">{formatFieldName(key)}</div>
-          {Array.isArray(value) ? (
-            <div className="ai-text-block">
-              {value.map((item, i) => (
-                <div key={i} style={{ marginBottom: 8 }}>
-                  {typeof item === 'object' ? JSON.stringify(item, null, 2) : `- ${item}`}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="ai-kv-grid">
-              {Object.entries(value).map(([k, v]) => (
-                <div key={k} className="ai-kv-item">
-                  <div className="kv-label">{formatFieldName(k)}</div>
-                  <div className="kv-value">{String(v)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default function DetailPage({ feature, onLogout }) {
@@ -247,7 +174,7 @@ export default function DetailPage({ feature, onLogout }) {
                   Analyzing with Claude AI...
                 </div>
               ) : (
-                renderAIAnalysis(aiResult)
+                <AIReport response={aiResult} title="AI analysis" />
               )}
             </div>
           </div>

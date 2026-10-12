@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import NativeAIPresets from '../components/NativeAIPresets';
+import AIReport from '../components/AIReport';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { aiEquipmentMaintenance } from '../services/api';
@@ -68,6 +70,7 @@ export default function AIEquipmentMaintenance({ onLogout }) {
 
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
           <form onSubmit={submit}>
+            <NativeAIPresets feature="AIEquipmentMaintenance" disabled={loading} onFill={(fields) => setForm(fields)} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               <div className="form-group"><label>Equipment Name *</label><input value={form.equipmentName} onChange={set('equipmentName')} required /></div>
               <div className="form-group"><label>Type</label><input value={form.type} onChange={set('type')} placeholder="tractor, combine, sprayer..." /></div>
@@ -100,9 +103,7 @@ export default function AIEquipmentMaintenance({ onLogout }) {
         {result && (
           <div className="card" style={{ padding: 20 }}>
             <h3>Maintenance Forecast</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 8 }}>
-              {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
-            </pre>
+            <AIReport response={result} title="AI result" />
           </div>
         )}
       </div>
